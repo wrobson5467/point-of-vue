@@ -1,5 +1,5 @@
 import { setupDevtoolsPlugin } from '@vue/devtools-api';
-import { toRaw } from 'vue-demi';
+import deepCopy from './deepCopy';
 let copyOfState = {};
 // copyOfState : {
 //   state : [ 
@@ -18,8 +18,22 @@ export const getCompState = (state, stateName) => {
     if (!copyOfState[stateName]) {
         copyOfState[stateName] = [];
     }
-    copyOfState[stateName].push(state);
-    console.log(copyOfState[stateName][0]["<target>"]);
+    //copyOfState[stateName].push(state);
+    copyOfState[stateName].push(deepCopy(state));
+    window.addEventListener('click', event => {
+        copyOfState[stateName].push(deepCopy(state));
+        console.log("copyOfState:", copyOfState);
+    });
+    window.addEventListener('keyup', event => {
+        // setTimeout(copyOfState[stateName].push(deepCopy(state)), 0);
+        // setTimeout(() => console.log("copyOfState:", copyOfState), 0);
+        copyOfState[stateName].push(deepCopy(state));
+        console.log("copyOfState:", copyOfState);
+    });
+    // window.addEventListener('click', )
+    //  setTimeout(() => {
+    //   getCompState(state, stateName)
+    //  }, 5000)
 };
 export function setupDevtools(app, data) {
     const stateType = 'My Awesome Plugin state';
@@ -66,37 +80,37 @@ export function setupDevtools(app, data) {
         app
     }, api => {
         devtoolsApi = api;
-        api.on.inspectComponent((payload, context) => {
-            payload.instanceData.state.push({
-                type: stateType,
-                key: '$hello',
-                value: data.message,
-                editable: false
-            });
-            payload.instanceData.state.push({
-                type: stateType,
-                key: 'time counter',
-                value: data.counter,
-                editable: false
-            });
-        });
-        setInterval(() => {
-            api.notifyComponentUpdate();
-        }, 5000);
-        api.on.visitComponentTree((payload, context) => {
-            const node = payload.treeNode;
-            if (payload.componentInstance.type.meow) {
-                node.tags.push({
-                    label: 'meow',
-                    textColor: 0x000000,
-                    backgroundColor: 0xff984f
-                });
-            }
-        });
+        // api.on.inspectComponent((payload, context) => {
+        //   payload.instanceData.state.push({
+        //     type: stateType,
+        //     key: '$hello',
+        //     value: data.message,
+        //     editable: false
+        //   })
+        //   payload.instanceData.state.push({
+        //     type: stateType,
+        //     key: 'time counter',
+        //     value: data.counter,
+        //     editable: false
+        //   })
+        // })
+        // setInterval(() => {
+        //   api.notifyComponentUpdate()
+        // }, 5000)
+        // api.on.visitComponentTree((payload, context) => {
+        //   const node = payload.treeNode
+        //   if (payload.componentInstance.type.meow) {
+        //     node.tags.push({
+        //       label: 'meow',
+        //       textColor: 0x000000,
+        //       backgroundColor: 0xff984f
+        //     })
+        //   }
+        // })
         api.addInspector({
             id: inspectorId,
             label: 'Point-Of-Vue!',
-            icon: 'pets',
+            icon: 'visibility',
         });
         // example app payload.rootNodes
         // [
@@ -158,11 +172,10 @@ export function setupDevtools(app, data) {
             if (payload.inspectorId === inspectorId) {
                 if (copyOfState[payload.nodeId]) {
                     payload.state = {};
-                    const stateObj = toRaw(copyOfState[payload.nodeId][copyOfState[payload.nodeId].length - 1]);
+                    //add toRaw?
+                    const stateObj = copyOfState[payload.nodeId][copyOfState[payload.nodeId].length - 1];
                     console.log('getInspectorState is running');
-                    console.log('stateObj:', stateObj);
-                    console.log("copyOfState[payload.nodeId][0] keys", Object.keys(copyOfState[payload.nodeId][0]));
-                    console.log('toRaw:', toRaw(copyOfState[payload.nodeId][0]));
+                    //console.log('toRaw:', toRaw(copyOfState[payload.nodeId][0]))
                     for (const key in stateObj) {
                         payload.state[key] = [
                             {
@@ -175,6 +188,9 @@ export function setupDevtools(app, data) {
                 }
             }
         });
+        setInterval(() => {
+            api.sendInspectorTree(inspectorId);
+        }, 500);
         api.addTimelineLayer({
             id: timelineLayerId,
             color: 0xff984f,
@@ -192,41 +208,39 @@ export function setupDevtools(app, data) {
         //     }
         //   })
         // })
+        let eventCounter = 1;
+        const getEventState = (index) => {
+            const eventState = {};
+            for (const key in copyOfState) {
+                eventState[key] = copyOfState[key][index];
+            }
+            return eventState;
+        };
         window.addEventListener('click', event => {
             const groupId = 'group-1';
             devtoolsApi.addTimelineEvent({
                 layerId: timelineLayerId,
                 event: {
                     time: Date.now(),
-                    data: {
-                        label: 'group test'
-                    },
-                    title: 'group test',
+                    data: getEventState(eventCounter),
+                    title: `event ${eventCounter}`,
                     groupId
                 }
             });
+            eventCounter += 1;
+        });
+        window.addEventListener('keyup', event => {
+            const groupId = 'group-1';
             devtoolsApi.addTimelineEvent({
                 layerId: timelineLayerId,
                 event: {
-                    time: Date.now() + 10,
-                    data: {
-                        label: 'group test (event 2)',
-                    },
-                    title: 'group test',
+                    time: Date.now(),
+                    data: getEventState(eventCounter),
+                    title: `event ${eventCounter}`,
                     groupId
                 }
             });
-            devtoolsApi.addTimelineEvent({
-                layerId: timelineLayerId,
-                event: {
-                    time: Date.now() + 20,
-                    data: {
-                        label: 'group test (event 3)',
-                    },
-                    title: 'group test',
-                    groupId
-                }
-            });
+            eventCounter += 1;
         });
     });
     return devtools;

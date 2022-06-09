@@ -3,7 +3,7 @@
         "src/global.d.ts",
         "src/**/*.ts",
         "__tests__/**/*.ts"
-    ],
+, "src/deepCopy.ts"    ],
     "compilerOptions": {
         "outDir": "dist",
         "sourceMap": false,
