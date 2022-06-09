@@ -112,44 +112,6 @@ export function setupDevtools(app, data) {
             label: 'Point-Of-Vue!',
             icon: 'visibility',
         });
-        // example app payload.rootNodes
-        // [
-        //   {
-        //     id: 'root',
-        //     label: 'Awesome root',
-        //     children: [
-        //       {
-        //         id: 'child-1',
-        //         label: 'Child 1',
-        //         tags: [
-        //           {
-        //             label: 'awesome',
-        //             textColor: 0xffffff,
-        //             backgroundColor: 0x000000
-        //           }
-        //         ]
-        //       },
-        //       {
-        //         id: 'child-2',
-        //         label: 'Child 2'
-        //       }
-        //     ]
-        //   },
-        //   {
-        //     id: 'root2',
-        //     label: 'Amazing root'
-        //   }
-        // ]
-        // copyOfState : {
-        //   state : [ 
-        //     proxy {
-        //       <target> : {
-        //         counter : 0,
-        //         colorCode : 'blue'
-        //       }
-        //     }
-        //   ]
-        // }
         api.on.getInspectorTree((payload, context) => {
             if (payload.inspectorId === inspectorId) {
                 payload.rootNodes = [];
@@ -181,13 +143,20 @@ export function setupDevtools(app, data) {
                             {
                                 key: key,
                                 value: stateObj[key],
-                                editable: false
+                                editable: true
                             }
                         ];
                     }
                 }
             }
         });
+        // // function set(object, path, value, cb)
+        // api.on.editInspectorState(payload => {
+        //   if (payload.inspectorId === inspectorId) {
+        //     // if (payload.nodeId === 'root') 
+        //       payload.set(payload.state, payload.path, payload.state.value)
+        //   }
+        // })
         setInterval(() => {
             api.sendInspectorTree(inspectorId);
         }, 500);
